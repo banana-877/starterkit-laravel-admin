@@ -84,15 +84,15 @@ $ sail artisan migrate:refresh --seed
 - mysqlへログイン
 
 ```
-$ docker exec -it {starterkit-laravel-vue-inertia}_mysql_1 /bin/bash -c 'mysql -h 127.0.0.1 -u root -p'
+$ docker exec -it {starterkit-laravel-admin}_mysql_1 /bin/bash -c 'mysql -h 127.0.0.1 -u root -p'
 ```
 パスワードを求められるので、```password```と入力する
 
 - create databaseのSQLでテスト用DB作成
 
 ```mysql
-mysql $ CREATE DATABASE {starterkit-laravel-vue-inertia}_test DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-mysql $ grant ALL PRIVILEGES on {starterkit-laravel-vue-inertia}_test.* to 'sail'@'%';
+mysql $ CREATE DATABASE {starterkit-laravel-admin}_test DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+mysql $ grant ALL PRIVILEGES on {starterkit-laravel-admin}_test.* to 'sail'@'%';
 ```
 
 - test用Key作成
