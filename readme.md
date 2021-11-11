@@ -1,81 +1,161 @@
-# Ping CRM
+# 開発環境構築手順
 
-A demo application to illustrate how Inertia.js works.
+## docker install
 
-![](https://raw.githubusercontent.com/inertiajs/pingcrm/master/screenshot.png)
+事前に<a href="https://docs.docker.com/docker-for-mac/install/">docker</a>をインストールする
 
-## Installation
+※Windowsの場合も同様にDockerとDockerComposeのインストールを行う。
 
-Clone the repo locally:
+## Composer依存関係インストール
 
-```sh
-git clone https://github.com/inertiajs/pingcrm.git pingcrm
-cd pingcrm
+```bin/sh
+$ docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v $(pwd):/opt \
+    -w /opt \
+    laravelsail/php80-composer:latest \
+    composer install --ignore-platform-reqs
 ```
 
-Install PHP dependencies:
+## sailコマンドalias設定
 
-```sh
-composer install
+ローカルのシェルの種類によって、変更する。
+
+- bashの場合
+```bash
+$ echo "alias sail='[ -f sail ] && bash sail || bash vendor/bin/sail'" >> ~/.bashrc
+$ source ~/.bashrc
 ```
 
-Install NPM dependencies:
-
-```sh
-npm ci
+- zshの場合
+```zsh
+$ echo "alias sail='[ -f sail ] && zsh sail || zsh vendor/bin/sail'" >> ~/.zshrc
+$ source ~/.zshrc
 ```
 
-Build assets:
+## コンテナ起動
+Laravelのルートディレクトリで以下コマンドを実行してコンテナ起動
 
-```sh
-npm run dev
+（初回は時間がかかる）
+
+```bin/sh
+$ sail up -d
 ```
 
-Setup configuration:
+## envファイル設定
 
-```sh
-cp .env.example .env
+- envコピー
+```bin/sh
+$ \cp -rf .env.example .env 
 ```
 
-Generate application key:
-
-```sh
-php artisan key:generate
+- APP_KEY生成
+```bin/sh
+$ sail artisan key:generate
 ```
 
-Create an SQLite database. You can also use another database (MySQL, Postgres), simply update your configuration accordingly.
-
-```sh
-touch database/database.sqlite
+```.env
+APP_KEY=base64:XXXXXXXXXXXXXXXXXXX
 ```
 
-Run database migrations:
+## NPM更新
 
-```sh
-php artisan migrate
+```bin/sh
+$ sail npm ci
+$ sail npm run dev
+```
+* 実装中は``` $sail npm dev ```を``` $sail npm watch ```にすれば変更が随時反映される。
+
+## DB更新
+
+```bin/sh
+$ sail artisan migrate:refresh --seed
 ```
 
-Run database seeder:
+## アクセス確認
+以下のページへアクセスして問題なければ構築成功
 
-```sh
-php artisan db:seed
-```
+- laravel_app: http://localhost
+- Username: johndoe@example.com
+- Password: secret
 
-Run the dev server (the output will give the address):
+# PHPUnitテスト環境用DB作成
 
-```sh
-php artisan serve
-```
-
-You're ready to go! Visit Ping CRM in your browser, and login with:
-
-- **Username:** johndoe@example.com
-- **Password:** secret
-
-## Running tests
-
-To run the Ping CRM tests, run:
+- mysqlへログイン
 
 ```
-phpunit
+$ docker exec -it {starterkit-laravel-admin}_mysql_1 /bin/bash -c 'mysql -h 127.0.0.1 -u root -p'
+```
+パスワードを求められるので、```password```と入力する
+
+- create databaseのSQLでテスト用DB作成
+
+```mysql
+mysql $ CREATE DATABASE {starterkit-laravel-admin}_test DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+mysql $ grant ALL PRIVILEGES on {starterkit-laravel-admin}_test.* to 'sail'@'%';
+```
+
+- test用Key作成
+
+```
+$ sail artisan key:generate --env=testing
+```
+
+# Sailコマンド
+マイグレーションやサーバの設定などdocker内で行う作業を効率化するコマンド
+
+詳細は<a> https://readouble.com/laravel/8.x/ja/sail.html </a>を参照
+
+- コンテナへログイン
+```bin/sh
+$ sail shell
+```
+
+- コンテナ起動
+```bin/sh
+$ sail up
+```
+
+- コンテナ起動（バックグラウンド）
+```bin/sh
+$ sail up -d
+```
+
+- コンテナ停止
+```bin/sh
+$ sail down
+```
+
+- phpコマンド実行
+```bin/sh
+$ sail php --version
+$ sail php script.php
+```
+
+- Composer
+```bin/sh
+$ sail composer require laravel/sanctum
+```
+
+Artisan
+```bin/sh
+$ sail artisan queue:work
+```
+
+Npm
+```bin/sh
+$ sail npm run prod
+```
+
+テスト
+```bin/sh
+$ sail test
+$ sail test --group orders
+$ sail dusk
+```
+
+ページ共有公開
+
+```bin/sh
+sail share
 ```
